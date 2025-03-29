@@ -27,17 +27,17 @@ public class Horario {
 
     @Override
     public boolean equals(Object otro) {
-        boolean otroNull = (otro == null);
+        boolean otroEsVacio = (otro == null);
         boolean otraClaseDif = (otro.getClass() != this.getClass());
-        if (otroNull || otraClaseDif){
+        if (otroEsVacio || otraClaseDif){
             return false;
         }
         // casting
         Horario otroHora = (Horario) otro;
-        return horariosIguales(hora, otroHora.hora) && horariosIguales(minutos, otroHora.minutos);
+        return mismosHorarios(hora, otroHora.hora) && mismosHorarios(minutos, otroHora.minutos);
     }
 
-    public boolean horariosIguales(int algo1,int algo2){
+    public boolean mismosHorarios(int algo1,int algo2){
         boolean res = true;
         if (algo1 != algo2){
             res = false;

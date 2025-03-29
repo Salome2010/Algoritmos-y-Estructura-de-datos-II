@@ -34,17 +34,17 @@ public class Fecha {
 
     @Override
     public boolean equals(Object otra) {
-        boolean otraEsNull = (otra == null);
+        boolean otraEsVacia = (otra == null);
         boolean otraClaseDistinta = otra.getClass() != this.getClass();
-        if (otraEsNull || otraClaseDistinta){
+        if (otraEsVacia || otraClaseDistinta){
             return false;
         }
         // casting
         Fecha otraFecha = (Fecha) otra;
-        return fechasIguales(dia, otraFecha.dia) && fechasIguales(mes, otraFecha.mes);
+        return mismaIguales(dia, otraFecha.dia) && mismaIguales(mes, otraFecha.mes);
     }
 
-    public boolean fechasIguales(int algo1, int algo2){
+    public boolean mismaIguales(int algo1, int algo2){
         boolean res = true;
         if (algo1 != algo2){
             res = false;
