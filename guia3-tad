@@ -1,0 +1,99 @@
+TAD Punto2D {
+    obs x: R
+    obs y: R
+
+    proc nuevoPunto(in x:R, in y:R): Punto2D
+        asegura {res.x = x}
+        asegura {res.y = y}
+    
+    proc mover(inout p: Punto2D, in Dx, Dy : R)
+        requiere {p = p0}
+        asegura {p.x = p0.x + Dx}
+        asegura {p.y = p0.y + Dy}
+    
+    proc distancia(in A, B :Punto2D): R
+        asegura {res = sqrt((B.x - A.x)**2 + (B.y - A.y)**2)}
+
+    proc distanciaAlOrigen(in p:Punto2D): R
+        asegura {res = sqrt(p.x**2 + p.y**2)}
+    
+}
+
+TAD Rectangulo2D {
+    obs origenx : R
+    obs origeny : R
+    obs alto: R
+    obs largo: R
+
+    proc nuevoRectangulo(in x,y,a,l : R): Rectangulo2D
+        asegura {res.origenx = x}
+        asegura {res.origeny = y}
+        asegura {res.alto = a}
+        asegura {res.largo = l}
+    
+    proc mover(inout r: Rectangulo2D, in x,y : R)
+        requiere {r = r0}
+        asegura {r.origenx = r0.origenx + x}
+        asegura {r.origeny = r0.origeny + y}
+        asegura {r.alto = r0.alto}
+        asegura {r.largo = r0.largo}
+
+    proc escalar(inout r:Rectangulo2D, in e: R) // uso el vertice origen como fijo y escalo a lo largo y ancho
+        requiere {r = r0 && e>0}
+        asegura {r.largo = r0.largo * e}
+        asegura {r.alto = r0.alto * e}
+        asegura {r.origenx = r0.origenx}
+        asegura {r.origeny = r0.origeny}
+    
+    proc estaContenido(in r1,r2 : Rectangulo2D): Bool
+        asegura {res = true <=> (r1.origenx ≥ r2.origenx && r1.origeny ≥ r2.origeny && r1.origenx + r1.largo ≤ r2.origenx + r2.largo
+                                  && r1.origeny + r1.alto ≤ r2.origeny + r2.alto)}
+
+}
+
+TAD Cola<T> {
+    obs elems: seq<T>
+
+    proc nuevaCola(): Cola<T>
+        asegura {res.elems = <>}
+    
+    proc estaVacia(in c: Cola<T>): Bool 
+        asegura {res = true <=> c.elems = <>}
+    
+    proc encolar(inout c:Cola<T>, in e: T)
+        requiere {c = c0}
+        asegura {c.elems = c0.elems ++ <e>} // lo mismo que concat(c0.elems, <e>)
+    
+    proc descolar(inout c:Cola<T>): T
+        requiere {c = c0}
+        requiere {c.elems != <>}
+        asegura {c.elems = tail(c0.elems)}
+        asegura {res = head(c0.elems)}
+    
+}
+
+TAD DobleCola<T> {
+    obs elems: seq<T>
+
+    proc nuevaCola(): DobleCola<T>
+        asegura {res.elems = <>}
+    
+    proc estaVacia(in c: DobleCola<T>): Bool 
+        asegura {res = true <=> c.elems = <>}
+    
+    proc encolarAdelante(inout c:DobleCola<T>, in e: T)
+        requiere {c = c0}
+        asegura {c.elems = <e> ++ c0.elems}
+
+    proc encolarAtras(inout c:DobleCola<T>, in e: T)
+        requiere {c = c0}
+        asegura {c.elems = c0.elems ++ <e>}
+
+    proc descolar(inout c:DobleCola<T>): T
+        requiere {c = c0 && c.elems != <>}
+        asegura {(∃i:Z)(i=|c0.elems| div 2 ∧_l  res = c0.elems[i])
+        asegura {c.elems = borrarEn(c0.elems, i)}
+    
+    aux borrarEn(in lista:seq<T>, in i: Z): seq<T> = 
+        subseq(lista, 0, i) ++ subseq(lista, i+1, |lista|)}
+}
