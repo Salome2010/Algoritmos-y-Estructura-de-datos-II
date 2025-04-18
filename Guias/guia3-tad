@@ -482,6 +482,3 @@ TAD Viaje {
 }
 
 
-asegura {(∀m ∈ ms)(m ∉ g.mercenariosDisponibles)}
-
-
