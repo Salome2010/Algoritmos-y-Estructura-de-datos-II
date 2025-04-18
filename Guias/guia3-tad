@@ -50,6 +50,27 @@ TAD Rectangulo2D {
                                   && r1.origeny + r1.alto ≤ r2.origeny + r2.alto)}
 
 }
+TAD Pila<T> {
+    obs elems: seq<T>
+
+    proc nuevaPila(): Pila<T>
+        asegura {res.elems = <>}
+    
+    proc estaVacia(in p: Pila<T>): Bool 
+        asegura {res = true <=> p.elems = <>}
+    
+    proc apilar(inout p:Pila<T>, in e: T)
+        requiere {p = p0}
+        asegura {p.elems = p0.elems + <e>} // lo mismo que concat(c0.elems, <e>)
+    
+    proc despilar(inout p:Pila<T>): T
+        requiere {p = p0}
+        requiere {p.elems != <>}
+        asegura {p.elems = subseq(p0.elems,0,|p0.elems|-1)}
+
+}
+
+
 
 TAD Cola<T> {
     obs elems: seq<T>
@@ -97,3 +118,370 @@ TAD DobleCola<T> {
     aux borrarEn(in lista:seq<T>, in i: Z): seq<T> = 
         subseq(lista, 0, i) ++ subseq(lista, i+1, |lista|)}
 }
+
+TAD Diccionario<K,V>{
+    obs dicc: dict<K,V>
+
+    proc nuevoDiccionario(): Diccionario<K,V>
+        asegura {res.dicc = {}}
+
+    proc definir(in k:K, in v: V, inout D: Diccionario<K,V>)
+        requiere {D = D0}
+        asegura {D.dicc = setKey(D0, k, v)}
+    
+    proc obtener(in k: K, in D:Diccionario<K,V>): V
+        requiere {k ∈ D.dicc}
+        asegura {res = D.dicc(k)}
+    
+    proc esta(in k:K, in D:Diccionario<K,V>): Bool
+        asegura {res = true <=> k ∈ D.dicc}
+    
+    proc borrar(in k:K, inout D:Diccionario<K,V>)
+        requiere {D = D0 ∧ k ∈ D.dicc}
+        asegura {D.dicc = delKey(D0.dicc, k)}
+    
+}
+
+TAD DiccionarioConHistoria<K,V>{
+    obs dicc: dict<K,V>
+    obs historia: dict<K, seq<V>>
+
+   proc nuevoDiccionario(): DiccionarioConHistoria<K,V>
+        asegura {res.dicc = {}}
+        asegura {res.historia = {}}
+
+    proc definir(in k:K, in v: V, inout D: DiccionarioConHistoria<K,V>)
+        requiere {D = D0}
+        asegura {D.dicc = setKey(D0, k, v)}
+        asegura {D.historia = if k ∈ D0.historia then setKey(D0.historia,k, D0.historia(k) ++ <v>) else setKey(D0, k, <v>)}
+    
+    proc obtener(in k: K, in D:DiccionarioConHistoria<K,V>): V
+        requiere {k ∈ D.dicc}
+        asegura {res = D.dicc(k)}
+    
+    proc esta(in k:K, in D:DiccionarioConHistoria<K,V>): Bool
+        asegura {res = true <=> k ∈ D.dicc}
+
+    proc borrar(in k:K, inout D:DiccionarioConHistoria<K,V>)
+        requiere {D = D0 ∧ k ∈ D.dicc}
+        asegura {D.dicc = delKey(D0.dicc, k)}
+        asegura {D.historia = D0.historia}
+
+    proc consultasHistoria(in k: K, in D: DiccionarioConHistoria<K,V>): seq<V>
+        requiere {k ∈ D.historia}
+        asegura {res = D.historia(k)}
+    
+}
+
+TAD Diccionario<K,V>{
+    obs dicc: conj<tupla<K,V>>
+
+    proc nuevoDiccionario(): Diccionario<K,V>
+        asegura {res.dicc = {}}
+
+    proc definir(in k: K, in v: V, inout D: Diccionario<K,V>)
+        requiere {D = D0}
+        asegura {(∃ t ∈ D0.dicc)(t0 = k ∧ D.dicc = D0.dicc - {t} ∪ {⟨k, v⟩}) ∨
+             (¬∃ t ∈ D0.dicc )(t0 = k ∧ D.dicc = D0.dicc ∪ {⟨k, v⟩})}
+
+
+    proc obtener(in k: K, in D:Diccionario<K,V>): V
+        requiere {(∃ t ∈ D.dicc)(t0=k)}
+        asegura {(∃ t ∈ D.dicc)(t0=k ∧ res = t1)}
+    
+    proc esta(in k:K, in D:Diccionario<K,V>): Bool
+        asegura {res = true <=> (∃ t ∈ D.dicc)(t0=k)}
+    
+    proc borrar(in k:K, inout D:Diccionario<K,V>)
+        requiere {D = D0 ∧ (∃ t ∈ D0.dicc)(t0=k)}
+        asegura {(∃ t ∈ D0.dicc)(t0 = k ∧ D.dicc = D0.dicc - {t})}
+}
+
+TAD Punto2Dpolar {  
+    // rho: la distancia al origen (≥ 0)
+    // theta: el ángulo respecto del eje x (en radianes, generalmente)
+    obs rho: R
+    obs theta: R
+
+    proc nuevoPunto(in x:R, in y:R): Punto2Dpolar
+        asegura {res.rho = sqrt(x^2 + y^2)}
+        asegura {res.theta = atan2(y, x)}
+    
+    proc mover(inout p: Punto2Dpolar, in Dx, Dy : R)
+        requiere {p = p0}
+        asegura {p.rho = sqrt((p0.rho * cos(p0.theta) + Dx)^2 + (p0.rho * sin(p0.theta) + Dy)^2)
+        ∧ p.theta = atan2(p0.rho * sin(p0.theta) + Dy, p0.rho * cos(p0.theta) + Dx)}
+
+
+    proc distancia(in A, B :Punto2Dpolar): R
+        asegura {res = sqrt((B.rho * cos(B.theta) - A.rho * cos(A.theta))^2 +
+            (B.rho * sin(B.theta) - A.rho * sin(A.theta))^2)}
+
+
+    proc distanciaAlOrigen(in p:Punto2Dpolar): R
+        asegura {res = p.rho}
+}
+
+TAD Pila<T> {
+    obs elems: dict<T,T>
+    obs cantidad: Z
+
+    proc nuevaPila(): Pila<T>
+        asegura {res.elems = {}}
+        asegura {res.cantidad = 0}
+    
+    proc estaVacia(in p: Pila<T>): Bool 
+        asegura {res = true <=> p.elems = {} ∧ p.cantidad = 0}
+    
+    proc apilar(inout p:Pila<T>, in e: T)
+        requiere {p = p0}
+        asegura {(∀ i:Z)(0<=i<p0.cantidad ⇒l  p.elems[i] = p0.elems[i]) ∧ p.elems[p0.cantidad] = e 
+                     ∧ p.cantidad = p0.cantidad + 1} 
+    
+    proc despilar(inout p:Pila<T>): T
+        requiere {p = p0 ∧ p0.cantidad > 0}
+        requiere {p.elems != {}}
+        asegura { res = p0.elems[p0.cantidad - 1] ∧ p.cantidad = p0.cantidad - 1 ∧
+                         (∀ i:Z)(0 ≤ i< p.cantidad ⇒l p.elems[i] = p0.elems[i])}
+
+}
+
+TAD MultiConjunto<T>{
+    obs conjunto: seq<T>
+
+    proc conjVacio(): MultiConjunto<T>
+        asegura {res.conjunto = <>}
+
+    proc esVacio(in c:MultiConjunto<T>): Bool
+        asegura {res = true <=> c.conjunto = <>}
+    
+    proc agregar(inout c:MultiConjunto<T>, in e: T)
+        requiere {c = c0}
+        asegura {c.conjunto = c0.conjunto ++ <e> }
+    
+    proc pertenece(in c:MultiConjunto<T>, in e: T): Bool
+        asegura {res = true <=> (∃ i:Z)(0<=i<|c.conjunto| ∧l c.conjunto[i]=e) }
+    
+    proc sacar(inout c:MultiConjunto<T>, in e: T)
+        requere {c = c0 ∧ e ∈ c0.conjunto }
+        asegura {(∃ j:Z)(0 ≤ j < |c0.conjunto| ∧l c0.conjunto[j] = e ∧ 
+            c.conjunto = borrarEn(c0.conjunto, j))
+        }
+
+    proc multiplicidad(in c:MultiConjunto<T>, in e: T): Z{
+        requere {e ∈ c.conjunto}
+        asegura {res = cantidadApariciones(e,c.conjunto)}
+    }
+
+    aux cantidadApariciones(in e:T, in conjun:seq<T>):Z =
+         Σ i∈[0,|conjun| - 1]: ifThenElse(conjun[i]=e, 1, 0)
+
+    aux borrarEn(in s:seq<T>, in i: Z): seq<T> = subseq(s,0,i) ++ subseq(s,i+1,|s|)
+
+}
+
+TAD MultiDict<K,V>{
+    obs paresKV = seq<tupla<K,V>>
+
+    proc nuevoDiccionario(): MultiDict<K,V>
+        asegura {res.paresKV = <>}
+
+    proc definir(in k:K, in v: V, inout D: MultiDict<K,V>)
+        requiere {D = D0}
+        asegura {D.paresKV = D0.paresKV ++ <<k,v>> }
+    
+    proc obtener(in k: K, in D:MultiDict<K,V>): seq<V>
+        asegura {res = todosLosValores(k, D.paresKV)}
+    
+    proc esta(in k:K, in D:MultiDict<K,V>): Bool
+        asegura {res = true <=> (∃ i:Z)(0<=i<|D.paresKV| ∧l D.paresKV[i]_0 = k)}
+
+    
+    proc borrar(in k:K, inout D:MultiDict<K,V>)
+        requiere {D = D0 ∧ (∃ i:Z)(0<=i<|D.paresKV| ∧l D.paresKV[i]_0 = k)}
+        asegura {D.dicc = borrarClve(D0.dicc, k)}
+
+    aux todosLosValores(in clave:K, pares:seq<tupla<K,V>>): seq<V> =
+          (∀ i:Z)(0 ≤ i < |pares| ∧l pares[i]_0 = clave ⇒ (∃ j:Z)(0 ≤ j < |res| ∧ res[j] = pares[i]_1)) ∧
+                  (∀ j:Z)(0 ≤ j < |res| ⇒l (∃ i:Z)(0 ≤ i < |pares| ∧l pares[i]_0 = clave ∧ res[j] = pares[i]_1))
+
+    aux borrarClve(in pares:seq<tupla<K,V>>, in clave: K): seq<tupla<K,V>> =
+        (∀ i,j:Z)(0 ≤ i < |pares| ∧l pares[i]_0 = clave ⇒ (∀ j:Z)((0 ≤ j < |res| ∧l res[j]_0 != pares[i]_0) =>  pares[j]∈ res))
+
+}
+TAD Contadores{
+    obs contador: dict<evento:Evento, cont:Z>
+    obs eventos: conj<Evento> // Evento puede ser de tipo str
+
+    proc crearContadores(): Contadores{
+        asegura {res.contador={} &  res.eventos = <>}
+    }
+    proc incrementar(inout c:Contadores, in e:Evento){
+        requiere {c = c0 & e ∈ c.eventos}
+        asegura {c.contador[e] = c0.contador[e] + 1}
+        asegura {(∀ ev ∈ c.eventos)(ev != e =>l c.contador[ev]= c0.contador[ev])}
+        asegura {c.eventos = c0.eventos}
+    }
+    proc cantidadEvento(in c:Contadores, in e:Evento): Z{
+        requiere {e ∈ c.eventos}
+        asegura {res = c.contador[e]}
+    }
+}
+TAD Contadores{
+    obs contador: dict<evento:Evento, cont:seq<struct<tiempo:Z,total:Z>>> // en tiempo por ejemplo, segundos desde el 1/1/1970
+    obs eventos: conj<Evento> // Evento puede ser de tipo str
+
+    proc crearContadores(): Contadores{
+        asegura {res.contador={} &  res.eventos = <>}
+    }
+    proc incrementar(inout c:Contadores, in e:Evento, in t:Z){
+        requiere {c = c0 & e ∈ c.eventos}
+        asegura {(∀ i:Z)((0<=i<|c0.contador[e]| && c0.contador[e][i].tiempo= t) =>l c.contador[e][i].total =c0.contador[e][i].total + 1)}
+        asegura {(¬∃ i:Z)(0 ≤ i < |c0.contador[e]| ∧l c0.contador[e][i].tiempo = t) =>
+                 (|c.contador[e]| = |c0.contador[e]| + 1 & c.contador[e][|c.contador[e]|-1].tiempo = t &
+                 c.contador[e][|c.contador[e]|-1].total = c0.contador[e][|c0.contador[e]|-1].total + 1 &
+                 subseq(c.contador[e], 0, |c0.contador[e]|) = c0.contador[e])}
+        asegura {(∀ ev ∈ c.eventos)(ev != e =>l c.contador[ev]= c0.contador[ev])}
+        asegura {c.eventos = c0.eventos}
+    }
+    proc cantidadEvento(in c:Contadores, in e:Evento): seq<struct<Z,Z>{
+        requiere {e ∈ c.eventos}
+        asegura {res = c.contador[e]}
+    }
+}
+
+TAD Robot{
+    obs coordenada: Coord // Coord es de tipo struct<x:Z,y:Z>
+    obs pasosCoordenadas: seq<Coord>
+
+    proc crearRobot():Robot{
+        asegura {res.coordenada = <> & res.pasosCoordenadas = <>}
+    }
+    proc ubicarse(inout r:Robot, in c:Coord){
+        requiere {r = r0}
+        asegura {r.coordenada = c & r.pasosCoordenadas = r0.pasosCoordenadas ++ <c>}
+    }
+    proc arriba(inout r:Robot){
+        requiere {r = r0}
+        asegura {r.coordenada.y = r0.coordenada.y + 1}
+        asegura {r.coordenada.x = r0.coordenada.x}
+        asegura {r.pasosCoordenadas = r0.pasosCoordenadas ++ <Coord{x: r0.coordenada.x, y: r0.coordenada.y + 1}>}
+    }
+    proc abajo(inout r:Robot){
+        requiere {r = r0}
+        asegura {r.coordenada.y = r0.coordenada.y - 1}
+        asegura {r.coordenada.x = r0.coordenada.x}
+        asegura {r.pasosCoordenadas = r0.pasosCoordenadas ++ <Coord{x: r0.coordenada.x, y: r0.coordenada.y - 1}>}
+    }
+    proc izquierda(inout r:Robot){
+        requiere {r = r0}
+        asegura {r.coordenada.y = r0.coordenada.y}
+        asegura {r.coordenada.x = r0.coordenada.x - 1}
+        asegura {r.pasosCoordenadas = r0.pasosCoordenadas ++ <Coord{x: r0.coordenada.x - 1 , y: r0.coordenada.y}>}
+    }
+    proc derecha(inout r:Robot){
+        requiere {r = r0}
+        asegura {r.coordenada.y = r0.coordenada.y}
+        asegura {r.coordenada.x = r0.coordenada.x + 1}
+        asegura {r.pasosCoordenadas = r0.pasosCoordenadas ++ <Coord{x: r0.coordenada.x + 1, y: r0.coordenada.y}>}
+    }
+    proc cordActual(in r:Robot): Coord{
+        requiere {|r.pasosCoordenadas| > 0}
+        asegura {res = r.pasosCoordenadas[|r.pasosCoordenadas| - 1]}
+    }
+    proc masDerecha(in r: Robot): Z{
+        requere {|r.pasosCoordenadas| > 0}
+        asegura {esMaximo(r.pasosCoordenadas, res)}
+    }
+    pred esMaximo(cordenadas: seq<Coord>, maximo:Z){
+        (∀ c:cordenadas)(maximo >= c.x) & (∃ c: cordenadas)(maximo = c.x)
+    }
+    proc cuantasVecesPaso(in r:Robot, in c:Coord): Z{
+        asegura {res = apariciones(r.pasosCoordenadas,c)}
+    }
+    aux apariciones(coordenadas: seq<Coord>, c:Coord): Z = Σ i∈[0,|coordenadas| - 1]: ifThenElse(coordenadas[i]=c, 1, 0)
+
+}
+TAD Guerra{
+    obs mercenariosDisponibles: conj<Mercenario> // mercenariosDisponibles(g) → conjunto de mercenarios contratados, pero que todavía no forman parte de ningún batallón
+                                                 // Mercenario es de tipo struct<poder:Z,costo:Z>
+    obs batallones: conj<Batallon> // batallon(g) → conjunto de batallones ya formados, y cada batallón es un conj<Mercenario>.
+    obs sumaDePoderCadaBatallon: dict<Batallon,Z>
+    obs dineroInicial: Dinero
+    obs territorios: conj<Territorio>
+
+    proc crearGuerra(in t:Territorio):Guerra{
+        asegura {res.mercenariosDisponibles = {} & res.batallones = {} & res.sumaDePoderCadaBatallon = {} & res.dineroInicial = 0 & res.territorios = {t}}
+    }
+
+    proc dineroInicial(inout g:Guerra, in d:Dinero){
+        requiere {g = g0}
+        asegura {g.dineroInicial = g0.dineroInicial + d}
+        asegura {g.mercenariosDisponibles = g0.mercenariosDisponibles}
+        asegura {g.batallones = g0.batallones}
+        asegura {g.sumaDePoderCadaBatallon = g0.sumaDePoderCadaBatallon}
+        asegura {g.territorios = g0.territorios}
+    }
+
+    proc contratarMercenario(inout g:Guerra, m:Mercenario){
+        requiere {g = g0 & m.poder > 0 & g.dineroInicial >= m.costo}
+        asegura {g.mercenariosDisponibles = g0.mercenariosDisponibles ∪ {m}}
+        asegura {g.dineroInicial = g0.dineroInicial - m.costo}
+    }
+
+
+    proc crearBatallon(inout g: Guerra, in ms: conj<Mercenario>){
+        requiere {g = g0 & (∀ m:ms)(m ∈ g.mercenariosDisponibles)}
+        asegura {g.batallones = g0.batallones ∪ {ms} }
+        asegura {g.sumaDePoderCadaBatallon[ms] = sumaPoder(ms)}
+        asegura {(∀m ∈ ms)(m ∉ g.mercenariosDisponibles)}
+    }
+    aux sumaPoder(in ms:conj<Mercenario>): Z = Σ m ∈ ms: m.poder
+    
+    proc atacarTerritorio(inout g: Guerra, in b:Batallon,in fuerzaEnemiga: Z, in t:Territorio){
+        // Atacar un territorio con un batallón en particualar
+        requiere {g = g0 & b ∈ g.batallones & g.dineroInicial>=500}
+        asegura {if (fuerzaEnemiga < g0.sumaDePoderCadaBatallon[b]) then (g.territorios = g0.territorios ∪ {t} & g.dineroInicial = g0.dineroInicial + 1000) 
+                else (g.dineroInicial = g0.dineroInicial - 500)}
+    }
+
+    proc cantidadTerritorios(in g:Guerra):Z{
+        asegura {res = #(g.territorios)}
+    }
+    proc dineroDisponible(in g:Guerra): Z{
+        asegura {res = g.dineroInicial}
+    }
+}
+TAD Viaje {
+    obs personasQueNoViajanEnAuto: conj<Persona>
+    obs autos: dict<p:Persona, ps:conj<Persona>>
+
+    proc crearViaje(): Viaje{
+        asegura {res.personasQueNoViajanEnAuto = {} & res.autos = {}}
+    }
+
+    proc personasQueViajan(inout v:Viaje, in p:Persona){
+        requiere {v = v0 & p ∉ v.personasQueNoViajanEnAuto ∧ p ∉ v.autos & (∀ a ∈ v.autos)(p ∉ v.autos[a])}
+        asegura {v.personasQueNoViajanEnAuto = v0.personasQueNoViajanEnAuto ∪ {p}}
+        asegura {v.autos = v0.autos}
+    }
+
+    proc tieneAuto(inout v:Viaje, in p:Persona){
+        requiere {v = v0 & p ∈ v0.personasQueNoViajanEnAuto}
+        asegura {(∀ d ∈ v0.autos)(p ∈ v0.autos[d] →l (∀ m ∈ v0.autos[d])(m ≠ p →l (m ∈ v.personasQueNoViajanEnAuto ∧ m ∉ v.autos[d])))}
+        asegura {v.autos[p] = asignarPersonas((v0.personasQueNoViajanEnAuto - {p}),res)}
+        asegura {v.personasQueNoViajanEnAuto = v0.personasQueNoViajanEnAuto - v.autos[p] - {p}}
+    }
+    pred asignarPersonas(in ps:conj<Persona>, in res:conj<Persona>){
+        |res|<=4 && (∀m ∈ res)(m ∈ ps)
+    }
+
+    proc calcularCostoDeViaje(in v:Viaje): Z {
+        asegura {res = |v.personasQueNoViajanEnAuto| * 30000 + |v.autos| * 40000 }
+    }
+}
+
+
+asegura {(∀m ∈ ms)(m ∉ g.mercenariosDisponibles)}
+
+

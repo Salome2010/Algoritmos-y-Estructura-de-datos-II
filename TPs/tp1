@@ -30,12 +30,38 @@ TAD $BerretaCoin {
     aux totalRecibido(u: Z, ts: seq<Transacción>): Z = Σ i∈[0,|ts| - 1]: IfthenElse(ts[i][2] = u, ts[i][3], 0) 
     
     aux totalGastado(u: Z, ts: seq<Transacción>): Z = Σ i∈[0,|ts| - 1]: IfthenElse(ts[i][1] = u, ts[i][3], 0) 
-    
-    aux bloqueLleno(cadena: seq<tupla(Z, tupla(Z, seq<transacción>)>) ): Bool =
- 
+    }
+
+    proc maximosTenedores(in b: BerretaCoin) : seq<Usuario> 
+        requiere {b.usuarios ≠ {}}
+        asegura {(∃u ∈ b.usuarios)((∀v ∈ b.usuarios)(u != v ∧ saldo(u, b) > saldo(v, b)) ⇒ u ∈ res) ∨ 
+        (∀v ∈ b.usuarios)(u != v ∧ saldo(u, b) >= saldo(v, b)) ⇒ u,v ∈ res)}
+        asegura {(∀u ∈ res)((∀ v ∈ b.usuarios)( saldo(u, b) ≥ saldo(v, b)))}
+        asegura {} 
+
+     proc maximosTenedores(in b: BerretaCoin) returns (res: seq<Usuario>)
+    requires b.usuarios ≠ {}
+    ensures (∀u ∈ b.usuarios ::
+                (∀v ∈ b.usuarios :: saldo(u, b) ≥ saldo(v, b)) ⇒ u ∈ res)
+    ensures (∀u ∈ res :: 
+                (∀v ∈ b.usuarios :: saldo(u, b) ≥ saldo(v, b)))
+    ensures (∀i, j :: 0 ≤ i < |res| ∧ 0 ≤ j < |res| ∧ i ≠ j ⇒ res[i] ≠ res[j])
+
+
+
 
     
 
+      
+
+      
 }
+
+
+
+
+
+
+
 
 
