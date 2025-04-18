@@ -468,7 +468,7 @@ TAD Viaje {
 
     proc tieneAuto(inout v:Viaje, in p:Persona){
         requiere {v = v0 & p ∈ v0.personasQueNoViajanEnAuto}
-        asegura {(∀ d ∈ v0.autos)(p ∈ v0.autos[d] →l (∀ m ∈ v0.autos[d])(m ≠ p →l (m ∈ v.personasQueNoViajanEnAuto ∧ m ∉ v.autos[d])))}
+        asegura {(∀ d ∈ v0.autos)(p ∈ v0.autos[d] →l (∀ m ∈ v0.autos[d])(m ∈ v.personasQueNoViajanEnAuto ∧ m ∉ v.autos[d]))}
         asegura {v.autos[p] = asignarPersonas((v0.personasQueNoViajanEnAuto - {p}),res)}
         asegura {v.personasQueNoViajanEnAuto = v0.personasQueNoViajanEnAuto - v.autos[p] - {p}}
     }
