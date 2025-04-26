@@ -411,7 +411,8 @@ TAD Guerra{
     obs territorios: conj<Territorio>
 
     proc crearGuerra(in t:Territorio):Guerra{
-        asegura {res.mercenariosDisponibles = {} & res.batallones = {} & res.sumaDePoderCadaBatallon = {} & res.dineroI = 0 & res.territorios = {t}}
+        asegura {res.mercenariosDisponibles = {} & res.batallones = {} & res.sumaDePoderCadaBatallon = {} & 
+                  res.dineroI = 0 & res.territorios = {t}}
     }
 
     proc dineroInicial(inout g:Guerra, in d:Dinero){
