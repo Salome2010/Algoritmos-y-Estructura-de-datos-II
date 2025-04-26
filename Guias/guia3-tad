@@ -406,17 +406,17 @@ TAD Guerra{
     obs mercenariosDisponibles: conj<Mercenario> // mercenariosDisponibles(g) → conjunto de mercenarios contratados, pero que todavía no forman parte de ningún batallón
                                                  // Mercenario es de tipo struct<poder:Z,costo:Z>
     obs batallones: conj<Batallon> // batallon(g) → conjunto de batallones ya formados, y cada batallón es un conj<Mercenario>.
-    obs sumaDePoderCadaBatallon: dict<Batallon,Z>
-    obs dineroInicial: Dinero
+    obs sumaDePoderCadaBatallon: conj<struct<bat:Batallon,suma:Z>>
+    obs dineroI: Dinero
     obs territorios: conj<Territorio>
 
     proc crearGuerra(in t:Territorio):Guerra{
-        asegura {res.mercenariosDisponibles = {} & res.batallones = {} & res.sumaDePoderCadaBatallon = {} & res.dineroInicial = 0 & res.territorios = {t}}
+        asegura {res.mercenariosDisponibles = {} & res.batallones = {} & res.sumaDePoderCadaBatallon = {} & res.dineroI = 0 & res.territorios = {t}}
     }
 
     proc dineroInicial(inout g:Guerra, in d:Dinero){
         requiere {g = g0}
-        asegura {g.dineroInicial = g0.dineroInicial + d}
+        asegura {g.dineroI = g0.dineroI + d}
         asegura {g.mercenariosDisponibles = g0.mercenariosDisponibles}
         asegura {g.batallones = g0.batallones}
         asegura {g.sumaDePoderCadaBatallon = g0.sumaDePoderCadaBatallon}
@@ -424,34 +424,37 @@ TAD Guerra{
     }
 
     proc contratarMercenario(inout g:Guerra, m:Mercenario){
-        requiere {g = g0 & m.poder > 0 & g.dineroInicial >= m.costo}
+        requiere {g = g0 & m.poder > 0 & g.dineroI >= m.costo}
         asegura {g.mercenariosDisponibles = g0.mercenariosDisponibles ∪ {m}}
-        asegura {g.dineroInicial = g0.dineroInicial - m.costo}
+        asegura {g.dineroI = g0.dineroI - m.costo}
     }
 
 
-    proc crearBatallon(inout g: Guerra, in ms: conj<Mercenario>){
-        requiere {g = g0 & (∀ m:ms)(m ∈ g.mercenariosDisponibles)}
-        asegura {g.batallones = g0.batallones ∪ {ms} }
-        asegura {g.sumaDePoderCadaBatallon[ms] = sumaPoder(ms)}
-        asegura {(∀m ∈ ms)(m ∉ g.mercenariosDisponibles)}
+    proc crearBatallon(inout g: Guerra, in ms: struct<b:Batallon,suma:Z>){
+        requiere {g = g0 & (∀ m:ms.b)(m ∈ g.mercenariosDisponibles) & ms.suma = sumaPoder(ms.b)}
+        asegura {g.batallones = g0.batallones ∪ {ms.b} }
+        asegura {g.sumaDePoderCadaBatallon = g0.sumaDePoderCadaBatallon ∪ {ms}}
+        asegura {(∀m ∈ ms.b)(m ∉ g.mercenariosDisponibles) &  g.dineroInicial = g0.dineroInicial & g.territorios = g0.territorios}
     }
     aux sumaPoder(in ms:conj<Mercenario>): Z = Σ m ∈ ms: m.poder
     
-    proc atacarTerritorio(inout g: Guerra, in b:Batallon,in fuerzaEnemiga: Z, in t:Territorio){
+    proc atacarTerritorio(inout g: Guerra, in ms:struct<b:Batallon,suma:Z>,in fuerzaEnemiga: Z, in t:Territorio){
         // Atacar un territorio con un batallón en particualar
-        requiere {g = g0 & b ∈ g.batallones & g.dineroInicial>=500}
-        asegura {if (fuerzaEnemiga < g0.sumaDePoderCadaBatallon[b]) then (g.territorios = g0.territorios ∪ {t} & g.dineroInicial = g0.dineroInicial + 1000) 
-                else (g.dineroInicial = g0.dineroInicial - 500)}
+        requiere {g = g0 & (∃ batSuma ∈ g0.sumaDePoderCadaBatallon)(batSuma.b = ms.b & batSuma.suma = ms.suma) & g.dineroI>=500}
+        asegura {fuerzaEnemiga < ms.suma =>l (g.territorios = g0.territorios ∪ {t} & g.dineroI = g0.dineroI + 1000) 
+                 &  (fuerzaEnemiga ≥ ms.suma =>l g.territorios = g0.territorios & g.dineroI = g0.dineroI - 500)}
+        asegura {g.batallones = g0.batallones & g.sumaDePoderCadaBatallon = g0.sumaDePoderCadaBatallon &
+                 g.mercenariosDisponibles = g0.mercenariosDisponibles}
     }
 
     proc cantidadTerritorios(in g:Guerra):Z{
         asegura {res = #(g.territorios)}
     }
     proc dineroDisponible(in g:Guerra): Z{
-        asegura {res = g.dineroInicial}
+        asegura {res = g.dineroI}
     }
 }
+    
 TAD Viaje {
     obs personasQueNoViajanEnAuto: conj<Persona>
     obs autos: dict<p:Persona, ps:conj<Persona>>
