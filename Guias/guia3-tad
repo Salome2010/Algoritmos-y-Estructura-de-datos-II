@@ -485,4 +485,116 @@ TAD Viaje {
     }
 }
 
+TAD Cache<K,V> { // a) FIFO
+    obs info: Dict<clave:K,valor:V>
+    obs cap: Z
+    obs ordenK: seq<K>
+
+    proc crearCache(in cm:Z): Cache<K,V>
+        asegura {res.info={} & res.cap = cm & res.ordenK = <>}
+    
+    proc esta(in c:Cache<K,V>, in k:K):Bool
+        asegura {res = true <=> k ∈ c.info}
+
+    proc obtener(in c:Cache<K,V>, in k:K):V
+        requere {k ∈ c.info & k ∈ c.ordenK}
+        asegura {res = c.info[k]}
+
+    proc definir(inout c:Cache<K,V>, in k:K, in v:V)
+        requere {c = c0}
+        // caso 1: k ya pertenece 
+        asegura {k ∈ c0.info => c.info = setKey(c0.info,k,v) & c.ordenK = actualizarOrden(c,k)
+                 & c.cap = c0.cap}
+        // caso 2: k no pertenece y hay espacio
+        asegura {k !∈ c0.info & |c0.ordenK|<c0.cap => c.info = setKey(c0.info,k,v) & c.ordenK = c0.ordenK ++ <k>
+                 & c.cap = c0.cap + 1}
+        // caso 3: k no pertenece y no hay capacidad (hay que eliminar la primera k)
+        asegura {k !∈ c0.info & |c0.ordenK|>=c0.cap => c.info = setKey(delKey(c0.info,c0.ordenK[|c0.ordenK|-1]),k,v) & c.ordenK = c0.ordenK ++ <k>
+                 & c.cap = c0.cap}
+    
+    pred actualizarOrden(in c:Cache<K,V>, in k:K){ // no funciona con repetidos
+        (∀i,j:Z)((0<=i,j<|c0.ordenK| && i<j & c0.ordenK[i]!=k & c0.ordenK[j]!=k) =>l (∃ p,q:Z)(0<=p,q<|c.ordenK|-1 & p<q && c0.ordenK[i] = c.ordenK[p] 
+        & c0.ordenK[j]=c.ordenK[q])) & c.ordenK[|c.ordenK|-1] =k
+    }
+    
+}
+
+TAD Cache<K,V> { // a) LRU
+    obs info: Dict<clave:K,valor:V>
+    obs cap: Z
+    obs ordenK: seq<K>
+
+    proc crearCache(in cm:Z): Cache<K,V>
+        asegura {res.info={} & res.cap = cm & res.ordenK = <>}
+    
+    proc esta(in c:Cache<K,V>, in k:K):Bool
+        asegura {res = c.info[k] ∧ c.ordenK = actualizarOrden(c, k)}
+
+    proc obtener(in c:Cache<K,V>, in k:K):V
+        requere {k ∈ c.info & k ∈ c.ordenK}
+        asegura {res = c.info[k]}
+
+    proc definir(inout c:Cache<K,V>, in k:K, in v:V)
+       requiere {c = c0}
+       // Caso 1: k ya pertenece
+       asegura {k ∈ c0.info => c.info = setKey(c0.info, k, v) ∧ c.ordenK = actualizarOrden(c0, k) 
+                 ∧ c.cap = c0.cap}
+       // Caso 2: k no pertenece y hay espacio
+       asegura {k ∉ c0.info ∧ |c0.ordenK| < c0.cap => c.info = setKey(c0.info, k, v) ∧
+                 c.ordenK = c0.ordenK ++ <k> ∧ c.cap = c0.cap}
+       // Caso 3: k no pertenece y no hay espacio
+       asegura {k ∉ c0.info ∧ |c0.ordenK| ≥ c0.cap => c.info = setKey(delKey(c0.info, c0.ordenK[0]), k, v) ∧
+               c.ordenK = tail(c0.ordenK) ++ <k> ∧ c.cap = c0.cap}
+
+    
+    pred actualizarOrden(in c:Cache<K,V>, in k:K){ // no funciona con repetidos
+        (∀i,j:Z)((0<=i,j<|c0.ordenK| && i<j & c0.ordenK[i]!=k & c0.ordenK[j]!=k) =>l (∃ p,q:Z)(0<=p,q<|c.ordenK|-1 & p<q && c0.ordenK[i] = c.ordenK[p] 
+        & c0.ordenK[j]=c.ordenK[q])) & c.ordenK[|c.ordenK|-1] =k
+    }
+    
+}
+TAD Cache<K,V> // c) TTL
+
+TAD Vivero {
+    // c) ¿que cambiarıa si supieramos a priori que cada vez que compramos en el mayorista pagamos exactamente el 10 % mas
+    // que la vez anterior? Describa los cambios en palabras
+    // podria obs Historial: Dict<planta, precioCompra> y voy actualizando el precio de compra haciendo el que tengo *10/100
+    // y en comprarPlanta elimino el parametro precioCompra
+    // en dineroCaja restaria ese nuevo precio cada vez 
+    
+    obs dineroCaja: Dinero // Dinero puede ser de tipo R
+    obs plantas: Dict<Planta, Valor> // valor es de tipo struc<cant:Z,precioVenta:Dinero>
+                                     // Planta es un tipo de especie
+
+    proc crearVivero(in d:Dinero): Vivero
+        asegura {res.dineroCaja = d & res.plantas = {}}
+
+    proc comprarPlanta(inout v:Vivero, in p: Planta, in precioCompra:Dinero)
+        requere {v=v0 & v.dineroCaja >= precioCompra & precioCompra>0} 
+        // caso 1: la especie ya la teniamos
+        asegura {(p ∈ v0.plantas) => (v.plantas[p].cant = v0.plantas[p].cant + 1 & v.dineroCaja = v0.dineroCaja - precioCompra
+                  & v.plantas[p].precioVenta = v0.plantas[p].precioVenta)}
+        // caso 2: la especie no  la teniamos
+        asegura {(p ∉ v0.plantas) => (v.plantas = setKey(v0.plantas,p,<1,0>) & v.dineroCaja = v0.dineroCaja - precioCompra)}
+    
+    proc venderPlanta(inout v:Vivero, in p: Planta)
+        requere {v=v0 & p ∈ v.plantas & v.plantas[p].cant >= 1} 
+        // caso 1: tenemos solo una unidad
+        asegura {(v0.plantas[p].cant = 1) => (v.dineroCaja = v0.dineroCaja + v0.plantas[p].precioVenta 
+                  & v.plantas = delKey(v0.plantas,p))}
+        // caso 2: tenemos mas de una unidad
+        asegura {(v0.plantas[p].cant > 1) => (v.dineroCaja = v0.dineroCaja + v0.plantas[p].precioVenta 
+                  & v.plantas[p].cant = v0.plantas[p].cant - 1 & v.plantas[p].precioVenta = v0.plantas[p].precioVenta)}
+
+    proc cambiarPrecioVenta(inout v:Vivero, in p: Planta, in nuevoP:Dinero)
+        requiere {v = v0 & p ∈ v.plantas & nuevoP > 0 }
+        asegura {v.plantas[p].precioVenta = nuevoP & v.plantas[p].cant = v0.plantas[p].cant}
+        asegura {(∀ e ∈ v0.plantas)(e != p =>l v.plantas[e] = v0.plantas[e])}
+        asegura {v.dineroCaja = v0.dineroCaja}
+    
+    proc dineroDelVivero(in v:Vivero):Dinero
+        asegura {res = v.dineroCaja}
+    
+}
+
 
