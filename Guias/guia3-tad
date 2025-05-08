@@ -77,6 +77,7 @@ TAD Cola<T> {
 
     proc nuevaCola(): Cola<T>
         asegura {res.elems = <>}
+
     
     proc estaVacia(in c: Cola<T>): Bool 
         asegura {res = true <=> c.elems = <>}
@@ -153,11 +154,11 @@ TAD DiccionarioConHistoria<K,V>{
     proc definir(in k:K, in v: V, inout D: DiccionarioConHistoria<K,V>)
         requiere {D = D0}
         asegura {D.dicc = setKey(D0, k, v)}
-        asegura {D.historia = if k ∈ D0.historia then setKey(D0.historia,k, D0.historia(k) ++ <v>) else setKey(D0, k, <v>)}
+        asegura {D.historia = if k ∈ D0.historia then setKey(D0.historia,k, D0.historia[k] ++ <v>) else setKey(D0, k, <v>)}
     
     proc obtener(in k: K, in D:DiccionarioConHistoria<K,V>): V
         requiere {k ∈ D.dicc}
-        asegura {res = D.dicc(k)}
+        asegura {res = D.dicc[k]}
     
     proc esta(in k:K, in D:DiccionarioConHistoria<K,V>): Bool
         asegura {res = true <=> k ∈ D.dicc}
@@ -165,11 +166,12 @@ TAD DiccionarioConHistoria<K,V>{
     proc borrar(in k:K, inout D:DiccionarioConHistoria<K,V>)
         requiere {D = D0 ∧ k ∈ D.dicc}
         asegura {D.dicc = delKey(D0.dicc, k)}
+        asegura {(∀ c:K)(c ≠ k ⇒l (c ∈ D0.dicc ⇔ c ∈ D.dicc)) ∧ k ∉ D.dicc ∧ k ∈ D0.dicc}
         asegura {D.historia = D0.historia}
 
     proc consultasHistoria(in k: K, in D: DiccionarioConHistoria<K,V>): seq<V>
         requiere {k ∈ D.historia}
-        asegura {res = D.historia(k)}
+        asegura {res = D.historia[k]}
     
 }
 
@@ -181,20 +183,23 @@ TAD Diccionario<K,V>{
 
     proc definir(in k: K, in v: V, inout D: Diccionario<K,V>)
         requiere {D = D0}
-        asegura {(∃ t ∈ D0.dicc)(t0 = k ∧ D.dicc = D0.dicc - {t} ∪ {⟨k, v⟩}) ∨
-             (¬∃ t ∈ D0.dicc )(t0 = k ∧ D.dicc = D0.dicc ∪ {⟨k, v⟩})}
+        asegura {(∃ t:<K,V>)(t ∈ D0.dicc ∧l t0 = k ∧ D.dicc = D0.dicc - {t} ∪ {⟨k, v⟩}) ∨
+             (¬∃ t:<K,V> )(t ∈ D0.dicc ∧l t0 = k ∧ D.dicc = D0.dicc ∪ {⟨k, v⟩})}
 
 
     proc obtener(in k: K, in D:Diccionario<K,V>): V
-        requiere {(∃ t ∈ D.dicc)(t0=k)}
-        asegura {(∃ t ∈ D.dicc)(t0=k ∧ res = t1)}
+        requiere {(∃t:<K,V>)(t ∈ D.dicc ∧l t0=k)}
+        asegura {(∃t:<K,V>)(t ∈ D.dicc ∧l t0=k ∧ res = t1)}
     
     proc esta(in k:K, in D:Diccionario<K,V>): Bool
-        asegura {res = true <=> (∃ t ∈ D.dicc)(t0=k)}
+        asegura {res = true <=> (∃ t:<K,V>)(t ∈ D.dicc ∧l t0=k)}
     
     proc borrar(in k:K, inout D:Diccionario<K,V>)
-        requiere {D = D0 ∧ (∃ t ∈ D0.dicc)(t0=k)}
-        asegura {(∃ t ∈ D0.dicc)(t0 = k ∧ D.dicc = D0.dicc - {t})}
+        requiere {D = D0 ∧ (∃ t:<K,V>)(t ∈ D0.dicc ∧l t0=k)}
+        asegura {(∃ t:<K,V>)(t ∈ D0.dicc ∧l t0 = k ∧ D.dicc = D0.dicc - {t})}
+        asegura {(∀t:<K,V>)(t ∈ D0.dicc ∧l t0 ≠ k =>l t ∈ D.dicc)}
+        asegura {(∀ t:⟨K,V⟩)(t ∈ D.dicc ⇒l t ∈ D0.dicc)}
+
 }
 
 TAD Punto2Dpolar {  
@@ -596,5 +601,39 @@ TAD Vivero {
         asegura {res = v.dineroCaja}
     
 }
+TAD CentroEncuestre {
+    obs caballos: Dict<Caballo, vigor:Z>
+    obs caballosPorRaza: Dict<Raza,Conj<Caballo>>
+
+    proc crearCentro():CentroEncuestre
+        asegura {res.caballos = {} & res.caballosPorRaza = {}}
+
+    proc comprarCaballo(inout ce:CentroEncuestre, in cab:Caballo, in r:Raza, in vig:Z)
+        requiere {ce = ce0 & vig > 0 & cab ∉ ce.caballos}
+        asegura {ce.caballos = setKey(ce0.caballos, cab, vig) &
+                 (r ∈ ce0.caballosPorRaza => ce.caballosPorRaza[r] = ce0.caballosPorRaza[r] ∪ {cab}) &
+                 (r ∉ ce0.caballosPorRaza => ce.caballosPorRaza = setKey(ce0.caballosPorRaza, r, {cab}))}
+
+    proc entrenamiento(inout ce:CentroEncuestre,in cab:Caballo, in horas:Z)
+        requiere {ce = ce0 & cab ∈ ce.caballos & horas>=1}
+        asegura {ce.caballos = setKey(ce0.caballos,cab,ce0.caballos[cab] + horas)}
+        asegura {ce.caballosPorRaza = ce0.caballosPorRaza}
+
+    proc competir(inout ce:CentroEncuestre, in cab:Caballo, in gano:Bool)
+        requiere {ce = ce0 & cab ∈ ce.caballos}
+        asegura {ce.caballos = setKey(ce0.caballos,cab, ce0.caballos[cab] + ifThenElse(gano,10,-10))}
+        asegura {ce.caballosPorRaza = ce0.caballosPorRaza}
+
+    proc saberVigor(in ce:CentroEncuestre, in cab:Caballo):Z
+        requiere {cab ∈ ce.caballos}
+        asegura {res = ce.caballos[cab]}
+
+    proc mayorVigor(in ce:CentroEncuestre, in r:Raza):Caballo
+        requere {r ∈ ce.caballosPorRaza}
+        asegura {res ∈ ce.caballosPorRaza[r] & (∀ c:Caballo)(c ∈ ce.caballosPorRaza[r] =>l ce.caballos[c] <= ce.caballos[res])}
+}    
+
+
+    
 
 

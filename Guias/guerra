@@ -1,0 +1,49 @@
+TAD Guerra{
+    obs misMercenarios: dict<Mercenario,struct<c:Dinero,p:Poder>>
+    obs batallones: conj<struct<m:Mercenarios,suma:Poder>> // Mercenarios es de tipo conj<Mercenario>
+    obs dinero: Dinero
+    obs territorios: conj<ts:Territorio>
+
+    proc crerGuerra(in d:Dinero, in t:Territorio): Guerra{
+        requiere {True}
+        asegura {res.dinero = d & res.territorios = {t} & res.misMercenarios = {} & res.batallones = {}}
+    }
+
+    proc contratarMercenario(in m:Mercenario,in costo:Dinero, in poder:Poder, inout g:Guerra):{
+        requiere {g = g0 & poder > 0 & g.dinero >= costo & m ∉ g.misMercenarios}
+        asegura {|g.misMercenarios| = |g0.misMercenarios|+1}
+        asegura {g.misMercenarios = setKey(g0.misMercenarios,m,<costo,poder>)}
+        asegura {g.dinero = g0.dinero - costo}
+        asegura {g.batallones = g0.batallones}
+        asegura {g.territorios = g0.territorios}
+    }
+
+    proc crearBatallon(inout g:Guerra, in ms:struct<m:Mercenarios,suma:Poder>):{
+        requiere {g = g0 & (∀i ∈ ms.m)(i ∈ g.misMercenarios) & ms.suma = sumaPoder(g.misMercenarios,ms.m)}
+        asegura {g.batallones = g0.batallones ∪ {ms}}
+        asegura {(∀i ∈ ms.m)(i ∈ g0.misMercenarios =>l i ∉ g.misMercenarios)}
+        asegura {(∀j:Mercenario)((j ∈ g0.misMercenarios & j ∉ ms.m) =>l j ∈ g.misMercenarios)}
+        asegura {g.dinero = g0.dinero}
+        asegura {g.territorios = g0.territorios}
+
+    }
+
+    proc atacarTerritorio(in ms:struct<m:Mercenarios,suma:Poder>, in fe:Poder, in t:Territorio,inout g:Guerra):{
+        requiere {g = g0 & ms ∈ g.batallones & g.dinero >= 500}
+        asegura {fe < ms.suma => (g.dinero = g0.dinero + 1000 & g.territorios = g0.territorios ∪ {t})}
+        asegura {fe > ms.suma => (g.dinero = g0.dinero - 500 & g.territorios = g0.territorios)}
+        asegura {g.misMercenarios = g0.misMercenarios}
+        asegura {g.batallones = g0.batallones}
+    }
+    proc dineroDisponible(in g:Guerra): Z{
+        requiere {True}
+        asegura {res = g.dineroI}
+    }
+    proc cantidadTerritorios(in g:Guerra): Z{
+        requiere {True}
+        asegura {res = |g.territorios|}
+    }
+
+    aux sumaPoder(m:Mercenarios, ms:dict<Mercenario,struct<c:Dinero,p:Poder>>) :Poder =
+          Σ i ∈ m: ifThenElse(i ∈ ms, ms[i].p,0)
+}
