@@ -48,9 +48,52 @@ TAD $BerretaCoin {
     ensures (∀i, j :: 0 ≤ i < |res| ∧ 0 ≤ j < |res| ∧ i ≠ j ⇒ res[i] ≠ res[j])     
 
 
+pred EsDeCreacion(in bloq: seq<transacciones>, in b: BerretaCoin) {
+  (|bloq| > 0) ∧ (bloq[0].idTransaccion = 0) ∧ (bloq[0].idComprador = 0)
+        ∧ (bloq[0].idVendedor != 0)∧ (∀bl ∈ b.blockchain)(∀t ∈ bl.transaccionesbloque)
+                                                        ((t != bloq[0]) => t.idTransaccion != bloq[0].idTransaccion)
+} //
+ 
 
 
 
+pred EsMaximosTenedores(in b: BerretaCoin, in res: seq<Z>) {
+  //todos los elementos de res son claves válidas en b.usuarios
+  //para cada i en res, su saldo es mayor o igual que el saldo de cualquier usuario en usuarios
+  (∀i:Z)(i ∈ res =>l (i ∈ claves(b.usuarios) ∧ (∀j:Z)(j ∈ claves(b.usuarios) =>l b.usuarios[i] >= b.usuarios[j])))
+  //todos los usuarios en res tienen el mismo saldo (ie, los máximos tienen saldo igual)
+  ∧ (∀i,j:Z)((i ∈ res ∧ j ∈ res) =>l b.usuarios[i] = b.usuarios[j])
+}
+
+
+proc montoMedio(in b: BerretaCoin) : Z
+  requiere {b.blockchain != []}
+  asegura {cantTransacciones(b) != 0 => res = sumaTransacciones(b, 1, 0) / cantTransacciones(b)
+    ∧ (cantTransacciones(b) = 0 => res = 0)}
+
+proc cotizacionAPesos(in b: BerretaCoin, in cotizaciones: seq<Z>) : seq<Z>
+  requiere {|cotizaciones| = |b.blockchain|}
+  asegura {|res| = |b.blockchain|}
+  asegura {(∀h : Z)(0 <= h < |b.blockchain| =>l res[h] = cotizaciones[h] * sumaTransaccionesBloque(b, h))}
+
+
+proc agregarBloque(in bloq: seq<transacciones>, inout b: BerretaCoin)
+  requiere {b = b0}
+  requiere {|bloq| ≤ 50}
+  requiere {(∀t: transacciones)(t ∈ bloq =>l t.monto > 0)}  //solo t ∈ bloq
+  requiere {(∀i, j: Z)((0<= i < |bloq| ∧ i < j < |bloq|) =>l bloq[i].idTransaccion < bloq[j].idTransaccion)}  //creciente
+  requiere {(∀i: Z)(0 <= i < |bloq| =>l bloq[i].idComprador != bloq[i].idVendedor)}
+
+  requiere {(|b.blockchain| <= 3000 => EsDeCreacion(bloq, b)) ∧ (|b.blockchain| > 3000 => bloq[0].idTransaccion != 0)}  
+  //los primeros 3000 deben ser de creación
+  requiere {NingunoGastaMasDeLoQueTiene(b, bloq)} 
+  asegura {|b.blockchain| = |b0.blockchain| + 1}  //se agregó un bloque
+  asegura {b.blockchain[|b.blockchain| - 1].idBloque > b0.blockchain[|b0.blockchain| - 1].idBloque}
+  asegura {b.blockchain = b0.blockchain ++ ⟨⟨b0.blockchain[|b0.blockchain| - 1].idBloque + 1, bloq⟩⟩}//ahora idUltimoBloque ya no esta
+
+  asegura {if |b.blockchain| > 3000 then b.unidades = b0.unidades else b.unidades = b0.unidades + 1}//creación emite 1 unidad
+  asegura {b.blockchain[|b.blockchain| - 1].transaccionesbloque[0].idTransaccion > 
+                                                              b0.blockchain[|b.blockchain| - 1].transaccionesbloque[49].idTransaccion}
 
 
 

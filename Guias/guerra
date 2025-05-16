@@ -47,3 +47,34 @@ TAD Guerra{
     aux sumaPoder(m:Mercenarios, ms:dict<Mercenario,struct<c:Dinero,p:Poder>>) :Poder =
           Σ i ∈ m: ifThenElse(i ∈ ms, ms[i].p,0)
 }
+
+TAD dobleCola<T>{
+    obs cola1: seq<T>
+    obs cola2:seq<T>
+    obs aula:seq<T>
+
+    proc crearDobleCola():dobleCola<T>{
+        requiere {True}
+        asegura {res.cola1 = <> & res.cola2 = <> & res.aula = <>}
+    }
+
+    proc lleganALaCola1(inout dc:dobleCola<T>, in c1:T):{
+        requiere {dc = dc0}
+        asegura {dc.cola1 = dc0.cola1 ++ <c1>}
+        asegura {dc.cola2 = dc0.cola2}
+        asegura {dc.aula = dc0.aula}
+
+    }
+    proc lleganALaCola2(inout dc:dobleCola<T>, in c2:T):{
+        requiere {dc = dc0}
+        asegura {dc.cola1 = dc0.cola2 ++ <c2>}
+        asegura {dc.cola1 = dc0.cola1}
+         asegura {dc.aula = dc0.aula}
+    }
+    proc ingresanAlAula(inout dc:dobleCola<T>):{
+        requiere {dc = dc0 & dc.cola1 != <> & dc.cola2 != <>}
+        asegura {|dc.aula| = |dc0.cola1| + |dc0.cola2|}
+        asegura {(∀i,j:Z)(0 ≤ i < |dc0.cola1| ∧ 0 ≤ j < |dc0.cola2| ∧ dc0.cola1[i] ∉ subseq(dc0.cola1, 0, i) ∧ 
+            dc0.cola2[j] ∉ subseq(dc0.cola2, 0, j)) =>l <dc0.cola1[i], dc0.cola2[j]> ∈ subseq(dc.aula, |dc0.aula|, |dc.aula|)}
+    }
+}
