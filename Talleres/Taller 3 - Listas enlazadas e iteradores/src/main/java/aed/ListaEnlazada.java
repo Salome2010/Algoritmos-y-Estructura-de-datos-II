@@ -64,9 +64,9 @@ public class ListaEnlazada<T> implements Secuencia<T> {
     public T obtener(int i) {
         ListaIterador iterador = new ListaIterador();
         for (int j=0;j<i;j++){
-            iterador.siguiente();
+            iterador.siguiente(); // termina cuando apunta al nodo en la posicion i-1
         }
-        return iterador.siguiente();
+        return iterador.siguiente(); // estoy en la posicion i
     }
     // Elimina el nodo en la posición i.
     //Usa el iterador para posicionarse.
@@ -83,13 +83,13 @@ public class ListaEnlazada<T> implements Secuencia<T> {
         }
          // Si el nodo no es el último, fijo que el previo del siguiente sea el de indice dos atras
         // Ej en [1,2,3,4,5] elimino 3, fijo que el prev de 4 sea 2
-        if(iterador.actual.sig.sig !=null){
-            iterador.actual.sig.sig.ant = iterador.actual.sig.ant;
+        if(iterador.actual.sig.sig !=null){ // iterador.actual apunta al nodo con valor 2.
+            iterador.actual.sig.sig.ant = iterador.actual.sig.ant; // [4].ant = [3].ant = [2]
         }
         // Si el nodo no es el primero, fijo que el siguiente del previo sea el de indice dos adelante
         // Ej en [1,2,3,4,5] elimino 3, fijo que el sig de 2 sea 4
         if(iterador.actual.sig.ant !=null){
-            iterador.actual.sig.ant.sig = iterador.actual.sig.sig;
+            iterador.actual.sig.ant.sig = iterador.actual.sig.sig; // [2].sig = [3].sig = [4]
         }
         tamaño--;
 
@@ -100,7 +100,8 @@ public class ListaEnlazada<T> implements Secuencia<T> {
         for(int i = 0; iterador.haySiguiente() && i<indice; i++){
             iterador.siguiente();
         }
-        iterador.actual.sig.valor = elem;
+        iterador.actual.sig.valor = elem; // iterador.actual.sig es el nodo en la posición indice.
+        //iterador.actual es el nodo en la posición indice - 1.
     }
     // Constructor que copia otra lista enlazada usando agregarAtras.
     public ListaEnlazada(ListaEnlazada<T> lista) {
