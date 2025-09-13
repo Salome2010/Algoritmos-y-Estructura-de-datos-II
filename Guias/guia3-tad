@@ -54,19 +54,18 @@ TAD Pila<T> {
     obs elems: seq<T>
 
     proc nuevaPila(): Pila<T>
-        asegura {res.elems = <>}
+        asegura {res.elems = <>} // o |res.elems| = 0 
     
     proc estaVacia(in p: Pila<T>): Bool 
         asegura {res = true <=> p.elems = <>}
     
     proc apilar(inout p:Pila<T>, in e: T)
         requiere {p = p0}
-        asegura {p.elems = p0.elems + <e>} // lo mismo que concat(c0.elems, <e>)
+        asegura {p.elems = p0.elems ++ <e>} // lo mismo que concat(c0.elems, <e>)
     
     proc despilar(inout p:Pila<T>): T
-        requiere {p = p0}
-        requiere {p.elems != <>}
-        asegura {p.elems = subseq(p0.elems,0,|p0.elems|-1)}
+        requiere {p = p0 & |p.elems| > 0}
+        asegura {res = p0.elems[|p0.elems|-1] & p.elems = subseq(p0.elems,0,|p0.elems|-1) } 
 
 }
 
@@ -132,7 +131,7 @@ TAD Diccionario<K,V>{
     
     proc obtener(in k: K, in D:Diccionario<K,V>): V
         requiere {k ∈ D.dicc}
-        asegura {res = D.dicc(k)}
+        asegura {res = D.dicc[k]}
     
     proc esta(in k:K, in D:Diccionario<K,V>): Bool
         asegura {res = true <=> k ∈ D.dicc}

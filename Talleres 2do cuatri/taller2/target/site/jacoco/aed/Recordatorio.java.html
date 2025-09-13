@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Recordatorio.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">labo2</a> &gt; <a href="index.source.html" class="el_package">aed</a> &gt; <span class="el_source">Recordatorio.java</span></div><h1>Recordatorio.java</h1><pre class="source lang-java linenums">package aed;
+
+public class Recordatorio {
+    private String m;
+    private Fecha f;
+    private Horario h;
+
+<span class="fc" id="L8">    public Recordatorio(String mensaje, Fecha fecha, Horario horario) {</span>
+<span class="fc" id="L9">        this.m = mensaje;</span>
+<span class="fc" id="L10">        this.f = new Fecha(fecha);</span>
+<span class="fc" id="L11">        this.h = horario;</span>
+
+<span class="fc" id="L13">    }</span>
+
+    public Horario horario() {
+<span class="fc" id="L16">        return h;</span>
+    }
+
+    public Fecha fecha() {
+<span class="fc" id="L20">        Fecha fechaCopiada = new Fecha(this.f);</span>
+<span class="fc" id="L21">        return fechaCopiada;</span>
+    }
+
+    public String mensaje() {
+        // Implementar
+<span class="fc" id="L26">        return m;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L31">        return m + &quot; &quot; + &quot;@&quot; + &quot; &quot; + f + &quot; &quot; + h;</span>
+    }
+
+    @Override
+    public boolean equals(Object otro) {
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        boolean otroEsVacio = (otro == null);</span>
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if (otroEsVacio){</span>
+<span class="nc" id="L38">            return false;</span>
+        }
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">        boolean claseDistinta = otro.getClass() != this.getClass(); // compara la clase del objeto &quot;otra&quot; con la clase del objeto actual</span>
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">        if (claseDistinta){</span>
+<span class="nc" id="L42">            return false;  // si son disitntas devuelbe false pq no tiene sentido comparar dos clases difeentrs (ej: clase Fecha con clase String u otra)</span>
+        }
+<span class="fc" id="L44">        Recordatorio otroRecordatorio = (Recordatorio) otro; // como las clases son iguales se hace el cast, para convertir a &quot;otra&quot; en fecha</span>
+<span class="pc bpc" id="L45" title="3 of 6 branches missed.">        return h.equals(otroRecordatorio.h) &amp;&amp; f.equals(otroRecordatorio.f) &amp;&amp; m.equals(otroRecordatorio.m);</span>
+        // (a == b)      // puede ser false si distintos objetos en memoria
+        // (a.equals(b)); true  (mismo contenido)
+        // ahí sí usás el equals de String, Fecha y Horario, que compara contenido y no direcciones de memoria.
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

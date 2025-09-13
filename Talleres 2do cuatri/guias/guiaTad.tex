@@ -1,0 +1,34 @@
+TAD NumeroRacional{
+    obs numerador: Z
+    obs denominador: Z
+
+    proc crearFraccion(in n,d : Z): NumeroRacional{
+        asegura {res.numerador = n & res.denominador = d}
+    }
+
+    proc suma(in f1,f2: NumeroRacional): NumeroRacional{
+        asegura {res.numerador = (f1.numerador * f2.denominador) + (f2.numerador * f1.denominador)
+                  & res.denominador = f1.denominador * f2.denominador}
+    }
+
+    proc resta(in f1,f2: NumeroRacional): NumeroRacional{
+        asegura {res.numerador = (f1.numerador * f2.denominador) - (f2.numerador * f1.denominador)
+                  & res.denominador = f1.denominador * f2.denominador}
+    }
+
+    proc multiplicacion(in f1,f2: NumeroRacional): NumeroRacional{
+        asegura {res.numerador = (f1.numerador * f2.numerador) 
+                  & res.denominador = f1.denominador * f2.denominador}
+    }
+
+    proc division(in f1,f2: NumeroRacional): NumeroRacional{
+        requiere {f2.numerador != 0}
+        asegura {res.numerador = (f1.numerador * f2.denominador) 
+                  & res.denominador = f1.denominador * f2.numerador}
+    }
+
+    proc multiplicacion(in f1,f2: NumeroRacional): Bool{
+        asegura {res = True <=> = f1.numerador / f1.denominador = f2.numerador / f2.denominador}
+    }
+
+}

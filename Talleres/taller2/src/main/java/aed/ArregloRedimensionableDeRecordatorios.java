@@ -8,6 +8,7 @@ class ArregloRedimensionableDeRecordatorios {
     public ArregloRedimensionableDeRecordatorios() {  //El constructor inicializa el arreglo secuenciaRecordatorios con un tamaño de 0, es decir, no contiene elementos al principio.
         this.secuenciaRecordatorios = new Recordatorio[0];
     }
+    
 
     public int longitud() {
         int res = this.secuenciaRecordatorios.length;
